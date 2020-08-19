@@ -17,6 +17,8 @@ import java.util.HashMap;
 public class VisualizerPanel extends JPanel{
 
     private MidiBach instance;
+    private Color pressedBlackKey = new Color(12, 179, 100);
+    private Color pressedWhiteKey = Color.GREEN;
 
     public VisualizerPanel(MidiBach instance) {
         this.instance = instance;
@@ -93,7 +95,7 @@ public class VisualizerPanel extends JPanel{
             double xLoc = pair.getKey();
             boolean white = pair.getValue();
             if(white){
-                g2d.setColor(Color.GREEN);
+                g2d.setColor(pressedWhiteKey);
                 g2d.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
                 g2d.setColor(Color.BLACK);
                 g2d.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
@@ -117,7 +119,7 @@ public class VisualizerPanel extends JPanel{
             double xLoc = pair.getKey();
             boolean white = pair.getValue();
             if(!white){
-                g2d.setColor(Color.GREEN);
+                g2d.setColor(pressedBlackKey);
                 g2d.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
                 g2d.setColor(Color.BLACK);
                 g2d.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
@@ -129,7 +131,8 @@ public class VisualizerPanel extends JPanel{
             double width = pair.getValue() ? whiteKeyWidth : blackKeyWidth;
             double xLoc = pair.getKey() + width*0.18;
             width = width*0.7;
-            g2d.setColor(Color.GREEN);
+            Color c = pair.getValue() ? pressedWhiteKey : pressedBlackKey;
+            g2d.setColor(c);
             double viewHeight = getHeight() - whiteKeyHeight;
             double yLoc = (double) (v.getStartTime() - topTime) / (bottomTime - topTime) * viewHeight;
             double yEnd = (double) (v.getEndTime() - topTime) / (bottomTime - topTime) * viewHeight;
@@ -144,7 +147,8 @@ public class VisualizerPanel extends JPanel{
             double width = pair.getValue() ? whiteKeyWidth : blackKeyWidth;
             double xLoc = pair.getKey() + width*0.18;
             width = width*0.7;
-            g2d.setColor(Color.GREEN);
+            Color c = pair.getValue() ? pressedWhiteKey : pressedBlackKey;
+            g2d.setColor(c);
             double viewHeight = getHeight() - whiteKeyHeight;
             double yTop = (double) (topTime - (v.getEndTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
             double yBottom = (double) (topTime - (v.getStartTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
