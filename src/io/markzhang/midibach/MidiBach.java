@@ -11,7 +11,6 @@ public class MidiBach {
 
     private int fallingMicroSeconds = 5 * 1000000;
 
-    private ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>(); // noteVal, Note
     private Timeline timeline = new Timeline();
     private Timeline playbackTL = new Timeline();
 
@@ -39,46 +38,47 @@ public class MidiBach {
     public class MidiInputReceiver implements Receiver {
         public String name;
         private Timeline tl;
+        private ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
         public MidiInputReceiver(String name, Timeline tl) {
             this.tl = tl;
             this.name = name;
         }
         public void send(MidiMessage msg, long timeStamp) {
             timeStamp = System.nanoTime() / 1000;
-            byte[] rawData = msg.getMessage();
-            int status = msg.getStatus();
-            if (status == 176 && rawData[1] == 64) { // indicates pedal
-                // TODO: this stuff later
-                int intensity = rawData[2] & 0xFF;
-            } else if (128 <= status && status <= 159) {
-                boolean down = status >= 144;
-                int noteVal = rawData[1] & 0xFF;
-                int intensity = rawData[2] & 0xFF;
-                if (down) {
-                    Note note = new Note(timeStamp, Long.MAX_VALUE, noteVal, intensity);
-                    if (pressedNotes.containsKey(noteVal)){
-                        pressedNotes.get(noteVal).setEndTime(timeStamp);
-                    }
-                    pressedNotes.put(noteVal, note);
-                    tl.add(note);
-                } else {
-                    Note note = pressedNotes.get(noteVal);
-                    if (note == null) return;
-                    note.setEndTime(timeStamp);
-                    pressedNotes.remove(noteVal);
-                }
-            }
+            processMidiMsg(timeStamp, msg, tl, pressedNotes);
         }
         public void close() {}
+    }
+
+    public static void processMidiMsg(long timeStamp, MidiMessage msg, Timeline tll, ConcurrentHashMap<Integer, Note> pressedNotes) {
+        byte[] rawData = msg.getMessage();
+        int status = msg.getStatus();
+        if (status == 176 && rawData[1] == 64) { // indicates pedal
+            // TODO: this stuff later
+            int intensity = rawData[2] & 0xFF;
+        } else if (128 <= status && status <= 159) {
+            boolean down = status >= 144;
+            int noteVal = rawData[1] & 0xFF;
+            int intensity = rawData[2] & 0xFF;
+            if (down) {
+                Note note = new Note(timeStamp, Long.MAX_VALUE, noteVal, intensity);
+                if (pressedNotes.containsKey(noteVal)){
+                    pressedNotes.get(noteVal).setEndTime(timeStamp);
+                }
+                pressedNotes.put(noteVal, note);
+                tll.add(note);
+            } else {
+                Note note = pressedNotes.get(noteVal);
+                if (note == null) return;
+                note.setEndTime(timeStamp);
+                pressedNotes.remove(noteVal);
+            }
+        }
     }
 
     public static void main(String[] args) {
         MidiBach main = new MidiBach();
         new VisualizerFrame(main);
-    }
-
-    public ConcurrentHashMap<Integer, Note> getPressedNotes() {
-        return pressedNotes;
     }
 
     public Timeline getTimeline() {

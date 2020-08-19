@@ -2,7 +2,6 @@ package io.markzhang.midibach.gui;
 
 import io.markzhang.midibach.MidiBach;
 import io.markzhang.midibach.models.Note;
-import io.markzhang.midibach.utils.Timeline;
 import javafx.util.Pair;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -43,7 +42,6 @@ public class VisualizerFrame extends JFrame {
         record.addActionListener(e -> {
             if (recording) {
                 record.setText("Start Recording");
-                // Creating a sequence.
                 Sequence sequence = null;
                 try {
                     sequence = new Sequence(Sequence.PPQ, 125);
@@ -98,43 +96,18 @@ public class VisualizerFrame extends JFrame {
                 File selectedFile = fileChooser.getSelectedFile();
                 System.out.println("Selected file: " + selectedFile.getAbsolutePath());
                 main.getPlaybackTL().clear();
-                Sequence sequence = null;
                 try {
-                    sequence = MidiSystem.getSequence(selectedFile);
+                    Sequence sequence = MidiSystem.getSequence(selectedFile);
 
                     double microsecPerTick = sequence.getMicrosecondLength() * 1.0 / sequence.getTickLength();
                     long startTime = System.nanoTime()/1000 + main.getFallingMicroSeconds();
                     ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
                     for (Track track : sequence.getTracks()) {
-                        long tick = 0;
                         for (int i = 0; i < track.size(); i++) {
                             MidiEvent midiEvent = track.get(i);
                             MidiMessage msg = midiEvent.getMessage();
                             long timeStamp = startTime+(long)microsecPerTick*midiEvent.getTick();
-
-                            byte[] rawData = msg.getMessage();
-                            int status = msg.getStatus();
-                            if (status == 176 && rawData[1] == 64) { // indicates pedal
-                                // TODO: this stuff later
-                                int intensity = rawData[2] & 0xFF;
-                            } else if (128 <= status && status <= 159) {
-                                boolean down = status >= 144;
-                                int noteVal = rawData[1] & 0xFF;
-                                int intensity = rawData[2] & 0xFF;
-                                if (down) {
-                                    Note note = new Note(timeStamp, Long.MAX_VALUE, noteVal, intensity);
-                                    if (pressedNotes.containsKey(noteVal)){
-                                        pressedNotes.get(noteVal).setEndTime(timeStamp);
-                                    }
-                                    pressedNotes.put(noteVal, note);
-                                    main.getPlaybackTL().add(note);
-                                } else {
-                                    Note note = pressedNotes.get(noteVal);
-                                    if (note == null) return;
-                                    note.setEndTime(timeStamp);
-                                    pressedNotes.remove(noteVal);
-                                }
-                            }
+                            MidiBach.processMidiMsg(timeStamp, msg, main.getPlaybackTL(), pressedNotes);
                         }
                     }
                     Sequencer sequencer = MidiSystem.getSequencer();
