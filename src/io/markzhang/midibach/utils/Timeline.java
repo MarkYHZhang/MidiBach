@@ -2,6 +2,7 @@ package io.markzhang.midibach.utils;
 
 import io.markzhang.midibach.models.Note;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -29,12 +30,31 @@ public class Timeline {
         notesTimeline.put(start, note);
     }
 
+    public boolean contains(long startTime) {
+        return notesTimeline.containsKey(startTime);
+    }
+
+    public Note get(long startTime) {
+        return notesTimeline.get(startTime);
+    }
+
     public Collection<Note> getNotes() {
         return notesTimeline.values();
     }
 
     public void clear(){
         notesTimeline.clear();
+    }
+
+    public Collection<Note> getContains(long ts) {
+        Collection<Note> notes = new ArrayList<>();
+        for (Note note : notesTimeline.values()) {
+            if (note==null) continue;
+            if (note.getStartTime() <= ts && ts <= note.getEndTime()) {
+                notes.add(note);
+            }
+        }
+        return notes;
     }
 
 }

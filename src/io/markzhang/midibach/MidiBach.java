@@ -11,7 +11,7 @@ public class MidiBach {
 
     private ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>(); // noteVal, Note
     private Timeline timeline = new Timeline();
-    private long computerPianoTimeDeltaMicro;
+    private Timeline playbackTL = new Timeline();
 
     public void startReading() {
         MidiDevice device;
@@ -21,28 +21,28 @@ public class MidiBach {
                 device = MidiSystem.getMidiDevice(info);
                 System.out.println(info);
                 for (Transmitter t : device.getTransmitters()) {
-                    t.setReceiver(new MidiInputReceiver(device.getDeviceInfo().toString()));
+                    t.setReceiver(new MidiInputReceiver(device.getDeviceInfo().toString(),timeline));
                 }
-                device.getTransmitter().setReceiver(getNewReceiver(device.getDeviceInfo().toString()));
+                device.getTransmitter().setReceiver(getNewReceiver(device.getDeviceInfo().toString(),timeline));
                 device.open();
                 System.out.println(device.getDeviceInfo() + " Was Opened");
             } catch (MidiUnavailableException e) {}
         }
-        computerPianoTimeDeltaMicro = System.nanoTime() / 1000;
     }
 
-    public MidiInputReceiver getNewReceiver(String name){
-        return new MidiInputReceiver(name);
+    public MidiInputReceiver getNewReceiver(String name, Timeline tl){
+        return new MidiInputReceiver(name,tl);
     }
 
     public class MidiInputReceiver implements Receiver {
         public String name;
-        public MidiInputReceiver(String name) {
+        private Timeline tl;
+        public MidiInputReceiver(String name, Timeline tl) {
+            this.tl = tl;
             this.name = name;
         }
         public void send(MidiMessage msg, long timeStamp) {
             timeStamp = System.nanoTime() / 1000;
-            setDelta(0);
             byte[] rawData = msg.getMessage();
             int status = msg.getStatus();
             if (status == 176 && rawData[1] == 64) { // indicates pedal
@@ -58,7 +58,7 @@ public class MidiBach {
                         pressedNotes.get(noteVal).setEndTime(timeStamp);
                     }
                     pressedNotes.put(noteVal, note);
-                    timeline.add(note);
+                    tl.add(note);
                 } else {
                     Note note = pressedNotes.get(noteVal);
                     if (note == null) return;
@@ -83,11 +83,8 @@ public class MidiBach {
         return timeline;
     }
 
-    public void setDelta(long l) {
-        computerPianoTimeDeltaMicro = l;
+    public Timeline getPlaybackTL() {
+        return playbackTL;
     }
 
-    public long getComputerPianoTimeDeltaMicro() {
-        return computerPianoTimeDeltaMicro;
-    }
 }

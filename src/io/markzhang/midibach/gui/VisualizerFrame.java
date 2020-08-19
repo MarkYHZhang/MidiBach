@@ -2,11 +2,13 @@ package io.markzhang.midibach.gui;
 
 import io.markzhang.midibach.MidiBach;
 import io.markzhang.midibach.models.Note;
+import io.markzhang.midibach.utils.Timeline;
 import javafx.util.Pair;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VisualizerFrame extends JFrame {
 
@@ -80,7 +83,7 @@ public class VisualizerFrame extends JFrame {
                 recordStart = Long.MAX_VALUE;
             } else {
                 record.setText("Stop Recording");
-                recordStart = System.nanoTime() / 1000 - main.getComputerPianoTimeDeltaMicro();
+                recordStart = System.nanoTime() / 1000;
             }
             recording = !recording;
         });
@@ -94,15 +97,61 @@ public class VisualizerFrame extends JFrame {
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
                 System.out.println("Selected file: " + selectedFile.getAbsolutePath());
-                main.getTimeline().clear();
+                main.getPlaybackTL().clear();
                 Sequence sequence = null;
                 try {
                     sequence = MidiSystem.getSequence(selectedFile);
+
+                    double microsecPerTick = sequence.getMicrosecondLength() * 1.0 / sequence.getTickLength();
+                    long startTime = System.nanoTime()/1000 + 5*1000000;
+                    ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
+                    for (Track track : sequence.getTracks()) {
+                        long tick = 0;
+                        for (int i = 0; i < track.size(); i++) {
+                            MidiEvent midiEvent = track.get(i);
+                            MidiMessage msg = midiEvent.getMessage();
+                            long timeStamp = startTime+(long)microsecPerTick*midiEvent.getTick();
+
+                            byte[] rawData = msg.getMessage();
+                            int status = msg.getStatus();
+                            if (status == 176 && rawData[1] == 64) { // indicates pedal
+                                // TODO: this stuff later
+                                int intensity = rawData[2] & 0xFF;
+                            } else if (128 <= status && status <= 159) {
+                                boolean down = status >= 144;
+                                int noteVal = rawData[1] & 0xFF;
+                                int intensity = rawData[2] & 0xFF;
+                                if (down) {
+                                    Note note = new Note(timeStamp, Long.MAX_VALUE, noteVal, intensity);
+                                    if (pressedNotes.containsKey(noteVal)){
+                                        pressedNotes.get(noteVal).setEndTime(timeStamp);
+                                    }
+                                    pressedNotes.put(noteVal, note);
+                                    main.getPlaybackTL().add(note);
+                                } else {
+                                    Note note = pressedNotes.get(noteVal);
+                                    if (note == null) return;
+                                    note.setEndTime(timeStamp);
+                                    pressedNotes.remove(noteVal);
+                                }
+                            }
+                        }
+                    }
                     Sequencer sequencer = MidiSystem.getSequencer();
                     sequencer.setSequence(sequence);
-                    sequencer.getTransmitter().setReceiver(main.getNewReceiver("file"));
                     sequencer.open();
-                    sequencer.start();
+                    long timeDelta = System.nanoTime()/1000 - (startTime - 5*1000000);
+                    timeDelta /= 1000;
+                    new java.util.Timer().schedule(
+                            new java.util.TimerTask() {
+                                @Override
+                                public void run() {
+                                    sequencer.start();
+                                }
+                            },
+                            5000-timeDelta
+                    );
+
                 } catch (InvalidMidiDataException | IOException | MidiUnavailableException invalidMidiDataException) {
                     invalidMidiDataException.printStackTrace();
                 }
