@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MidiBach {
 
+    private int fallingMicroSeconds = 5 * 1000000;
+
     private ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>(); // noteVal, Note
     private Timeline timeline = new Timeline();
     private Timeline playbackTL = new Timeline();
@@ -87,4 +89,11 @@ public class MidiBach {
         return playbackTL;
     }
 
+    public int getFallingMicroSeconds() {
+        return fallingMicroSeconds;
+    }
+
+    public void setFallingMicroSeconds(int fallingMicroSeconds) {
+        this.fallingMicroSeconds = fallingMicroSeconds;
+    }
 }

@@ -103,7 +103,7 @@ public class VisualizerFrame extends JFrame {
                     sequence = MidiSystem.getSequence(selectedFile);
 
                     double microsecPerTick = sequence.getMicrosecondLength() * 1.0 / sequence.getTickLength();
-                    long startTime = System.nanoTime()/1000 + 5*1000000;
+                    long startTime = System.nanoTime()/1000 + main.getFallingMicroSeconds();
                     ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
                     for (Track track : sequence.getTracks()) {
                         long tick = 0;
@@ -140,7 +140,7 @@ public class VisualizerFrame extends JFrame {
                     Sequencer sequencer = MidiSystem.getSequencer();
                     sequencer.setSequence(sequence);
                     sequencer.open();
-                    long timeDelta = System.nanoTime()/1000 - (startTime - 5*1000000);
+                    long timeDelta = System.nanoTime()/1000 - (startTime - main.getFallingMicroSeconds());
                     timeDelta /= 1000;
                     new java.util.Timer().schedule(
                             new java.util.TimerTask() {

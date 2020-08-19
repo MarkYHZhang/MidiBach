@@ -13,7 +13,6 @@ import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class VisualizerPanel extends JPanel{
 
@@ -66,7 +65,7 @@ public class VisualizerPanel extends JPanel{
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         long bottomTime = System.nanoTime() / 1000;
-        long topTime = bottomTime - 5 * 1000000;
+        long topTime = bottomTime - instance.getFallingMicroSeconds();
         final Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -147,13 +146,12 @@ public class VisualizerPanel extends JPanel{
             width = width*0.7;
             g2d.setColor(Color.GREEN);
             double viewHeight = getHeight() - whiteKeyHeight;
-            double yTop = (double) (topTime - v.getEndTime() + 10*1000000) / (bottomTime - topTime) * viewHeight;
-            double yBottom = (double) (topTime - v.getStartTime() + 10*1000000) / (bottomTime - topTime) * viewHeight;
+            double yTop = (double) (topTime - (v.getEndTime() - 10*1000000)) / (bottomTime - topTime) * viewHeight;
+            double yBottom = (double) (topTime - (v.getStartTime() - 10*1000000)) / (bottomTime - topTime) * viewHeight;
             yBottom = Math.min(yBottom, viewHeight);
             g2d.fillRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
             g2d.setColor(Color.BLACK);
             g2d.drawRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
         });
-
     }
 }
