@@ -20,6 +20,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.io.File;
@@ -49,7 +50,7 @@ public class VisualizerFrame extends JFrame {
                 } catch (InvalidMidiDataException invalidMidiDataException) {
                     invalidMidiDataException.printStackTrace();
                 }
-                if (sequence != null) {
+                if (sequence != null && !main.getTimeline().tail(recordStart).isEmpty()) {
                     Track track = sequence.createTrack();
                     long offset = main.getTimeline().ceilNote(recordStart).getStartTime();
 
@@ -71,10 +72,26 @@ public class VisualizerFrame extends JFrame {
                         Pair<MidiEvent, MidiEvent> pair = note.toMidiEvents(1,-offset);
                         track.add(pair.getKey());
                         track.add(pair.getValue());
-                        System.out.println(pair.getKey().getTick() + " " + pair.getValue().getTick());
                     }
                     try {
-                        MidiSystem.write(sequence, 0, new File(System.currentTimeMillis()+".mid"));
+                        JFileChooser fileChooser = new JFileChooser();
+                        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+
+                        //set it to be a save dialog
+                        fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+                        //set a default filename (this is where you default extension first comes in)
+                        fileChooser.setSelectedFile(new File("mypiece.mid"));
+                        //Set an extension filter, so the user sees other XML files
+                        fileChooser.setFileFilter(new FileNameExtensionFilter("MIDI file","mid"));
+
+                        int result = fileChooser.showOpenDialog(this);
+                        if (result == JFileChooser.APPROVE_OPTION) {
+                            File selectedFile = fileChooser.getSelectedFile();
+                            String filename = selectedFile.toString();
+                            if (!filename .endsWith(".mid"))
+                                filename += ".mid";
+                            MidiSystem.write(sequence, 0, new File(filename));
+                        }
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
