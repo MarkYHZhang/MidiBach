@@ -18,7 +18,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.BorderLayout;
@@ -38,8 +37,6 @@ public class VisualizerFrame extends JFrame {
     public VisualizerFrame (MidiBach main) {
         setTitle("MidiBach: Visualizer");
         setLayout(new BorderLayout());
-        JPanel visualPanel = new VisualizerPanel(main);
-        add(visualPanel, BorderLayout.CENTER);
         JButton record = new JButton("Start Recording");
         record.addActionListener(e -> {
             if (recording) {
@@ -161,11 +158,12 @@ public class VisualizerFrame extends JFrame {
         });
         buttonPane.add(fallingTime);
         add(buttonPane, BorderLayout.PAGE_END);
+        VisualizerCanvas visualPanel = new VisualizerCanvas(main);
+        add(visualPanel, BorderLayout.CENTER);
         pack();
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setVisible(true);
-        Timer timer = new Timer(30, e -> repaint());
-        timer.start();
+        visualPanel.run();
     }
 }

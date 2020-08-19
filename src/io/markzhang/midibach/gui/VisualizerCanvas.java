@@ -4,26 +4,29 @@ import io.markzhang.midibach.MidiBach;
 import io.markzhang.midibach.models.Note;
 import javafx.util.Pair;
 
-import javax.swing.JPanel;
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferStrategy;
 import java.util.Collection;
 import java.util.HashMap;
 
-public class VisualizerPanel extends JPanel{
+public class VisualizerCanvas extends Canvas{
 
     private MidiBach instance;
     private Color pressedBlackKey = new Color(12, 179, 100);
     private Color pressedWhiteKey = Color.GREEN;
 
-    public VisualizerPanel(MidiBach instance) {
+    private BufferStrategy bs;
+
+    public VisualizerCanvas(MidiBach instance) {
         this.instance = instance;
         setPreferredSize(new Dimension(1500,900));
         setBackground(Color.BLACK);
+        setIgnoreRepaint(true);
         instance.startReading();
     }
 
@@ -63,9 +66,19 @@ public class VisualizerPanel extends JPanel{
         }
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    public void render() {
+        if (bs == null) {
+            createBufferStrategy(2);
+            bs = getBufferStrategy();
+        }
+        // Get hold of a graphics context for the accelerated
+        // surface and blank it out
+        Graphics2D g = (Graphics2D) bs.getDrawGraphics();
+        g.setColor(Color.black);
+        g.fillRect(0,0,getWidth(),getHeight());
+
+
+        //-----------------------------------------------------------------------------------------
         long bottomTime = System.nanoTime() / 1000;
         long topTime = bottomTime - instance.getFallingMicroSeconds();
         final Graphics2D g2d = (Graphics2D) g;
@@ -157,5 +170,92 @@ public class VisualizerPanel extends JPanel{
             g2d.setColor(Color.BLACK);
             g2d.drawRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
         });
+        //-----------------------------------------------------------------------------------------
+
+
+        // finally, we've completed drawing so clear up the graphics
+        // and flip the buffer over
+        g.dispose();
+        bs.show();
     }
+    /**
+     * FPS counter integer
+     */
+    private int fpsCount = 0;
+
+    public void run() {
+
+        //Maximum 60fps
+        double delta = 1.0/60.0;
+        // convert the time to seconds
+        double nextTime = (double)System.nanoTime() / 1000000000.0;
+
+        /*
+         * This variable is used to ensure that the rendering and
+         * the game logic doesn't go desync 0.5 second with each other
+         */
+        double maxTimeDiff = 0.5;
+
+        //this variable keep track of how many frames are skipped
+        int skippedFrames = 1;
+
+        //this variable determines the maximum frames that can be skipped
+        int maxSkippedFrames = 5;
+
+        //the current fps
+        int fps = 0;
+
+        //stores the current system nano time
+        long preTime = System.nanoTime();
+
+        //while the game runs
+        while(true){
+
+            //get the current time in seconds
+            double currTime = (double) System.nanoTime() / 1000000000.0;
+
+            //If the loop is fallen too much behind, render ASAP to prevent non-updating screen
+            if ((currTime - nextTime) > maxTimeDiff) nextTime = currTime;
+
+            //if we are a
+            if (currTime >= nextTime) {//if the loop is behind or at the time to render
+
+                // assign the time for the next update
+                nextTime += delta;
+
+                /*
+                 * Render if the program got the game logic done early
+                 * OR
+                 * If the game logic is too slow that the loop is already
+                 * 5 frames behind
+                 */
+                if ((currTime < nextTime) || (skippedFrames > maxSkippedFrames)) {
+                    render();
+                    fps++;
+                    skippedFrames = 1;
+                } else {
+                    skippedFrames++;
+                }
+            } else {// if the loop is generating too fast make it sleep for the program to catch up
+                // calculate the time to sleep
+                int sleepTime = (int) (1000.0 * (nextTime - currTime));
+                // sanity check
+                if (sleepTime > 0) {
+                    // sleep until the next update
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            if (((double)(System.nanoTime()-preTime))/1000000000.0>=1){
+                preTime = System.nanoTime();
+                fpsCount = fps;
+                fps=0;
+            }
+        }
+    }
+
 }
