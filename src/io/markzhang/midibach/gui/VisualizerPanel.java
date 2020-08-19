@@ -146,8 +146,8 @@ public class VisualizerPanel extends JPanel{
             width = width*0.7;
             g2d.setColor(Color.GREEN);
             double viewHeight = getHeight() - whiteKeyHeight;
-            double yTop = (double) (topTime - (v.getEndTime() - 10*1000000)) / (bottomTime - topTime) * viewHeight;
-            double yBottom = (double) (topTime - (v.getStartTime() - 10*1000000)) / (bottomTime - topTime) * viewHeight;
+            double yTop = (double) (topTime - (v.getEndTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
+            double yBottom = (double) (topTime - (v.getStartTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
             yBottom = Math.min(yBottom, viewHeight);
             g2d.fillRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
             g2d.setColor(Color.BLACK);

@@ -16,6 +16,7 @@ import javax.sound.midi.Track;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
@@ -122,7 +123,7 @@ public class VisualizerFrame extends JFrame {
                                     sequencer.start();
                                 }
                             },
-                            5000-timeDelta
+                            main.getFallingMicroSeconds()/1000-timeDelta
                     );
 
                 } catch (InvalidMidiDataException | IOException | MidiUnavailableException invalidMidiDataException) {
@@ -131,6 +132,19 @@ public class VisualizerFrame extends JFrame {
             }
         });
         buttonPane.add(select);
+        JButton fallingTime = new JButton("Adjust Falling Speed");
+        fallingTime.addActionListener(e -> {
+            try {
+                String raw = JOptionPane.showInputDialog("Input seconds to fall");
+                if (raw !=null &&!raw.trim().isEmpty()) {
+                    int seconds_to_fall = Integer.parseInt(raw);
+                    main.setFallingMicroSeconds(seconds_to_fall * 1000000);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, "Please input integral values only!");
+            }
+        });
+        buttonPane.add(fallingTime);
         add(buttonPane, BorderLayout.PAGE_END);
         pack();
         setLocationRelativeTo(null);
