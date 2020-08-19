@@ -79,9 +79,7 @@ public class VisualizerFrame extends JFrame {
 
                         //set it to be a save dialog
                         fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-                        //set a default filename (this is where you default extension first comes in)
                         fileChooser.setSelectedFile(new File("mypiece.mid"));
-                        //Set an extension filter, so the user sees other XML files
                         fileChooser.setFileFilter(new FileNameExtensionFilter("MIDI file","mid"));
 
                         int result = fileChooser.showOpenDialog(this);
