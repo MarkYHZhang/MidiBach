@@ -12,6 +12,7 @@ This project is sort of an exploration project of an even bigger project that is
 - [ ] Prettier buttons
 - [ ] Custom colours for the keys
 - [ ] Custom background support
+- [ ] Pedal support
 
 ## Screenshot(s)
 ![Inital demo](https://github.com/MarkYHZhang/MidiBach/blob/master/img/initial.jpg "Inital demo")
