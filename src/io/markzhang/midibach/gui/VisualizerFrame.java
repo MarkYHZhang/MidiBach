@@ -33,6 +33,7 @@ public class VisualizerFrame extends JFrame {
 
     private boolean recording = false;
     private long recordStart = Long.MAX_VALUE;
+    private Sequencer sequencer;
 
     public VisualizerFrame (MidiBach main) {
         setTitle("MidiBach: Visualizer");
@@ -123,7 +124,7 @@ public class VisualizerFrame extends JFrame {
                             MidiBach.processMidiMsg(timeStamp, msg, main.getPlaybackTL(), pressedNotes);
                         }
                     }
-                    Sequencer sequencer = MidiSystem.getSequencer();
+                    sequencer = MidiSystem.getSequencer();
                     sequencer.setSequence(sequence);
                     sequencer.open();
                     long timeDelta = System.nanoTime()/1000 - (startTime - main.getFallingMicroSeconds());
@@ -157,6 +158,15 @@ public class VisualizerFrame extends JFrame {
             }
         });
         buttonPane.add(fallingTime);
+        JButton clear = new JButton("Clear");
+        clear.addActionListener(e -> {
+            main.getTimeline().clear();
+            main.getPlaybackTL().clear();
+            if (sequencer!=null && sequencer.isRunning()) {
+                sequencer.stop();
+            }
+        });
+        buttonPane.add(clear);
         add(buttonPane, BorderLayout.PAGE_END);
         VisualizerCanvas visualPanel = new VisualizerCanvas(main);
         add(visualPanel, BorderLayout.CENTER);

@@ -17,7 +17,7 @@ import java.util.HashMap;
 public class VisualizerCanvas extends Canvas{
 
     private MidiBach instance;
-    private Color pressedBlackKey = new Color(12, 179, 100);
+    private Color pressedBlackKey = new Color(7, 151, 85);
     private Color pressedWhiteKey = Color.GREEN;
 
     private BufferStrategy bs;
@@ -172,9 +172,6 @@ public class VisualizerCanvas extends Canvas{
         });
         //-----------------------------------------------------------------------------------------
 
-
-        // finally, we've completed drawing so clear up the graphics
-        // and flip the buffer over
         g.dispose();
         bs.show();
     }
