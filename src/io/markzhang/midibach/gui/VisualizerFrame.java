@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class VisualizerFrame extends JFrame {
 
     private boolean recording = false;
+    private long lastClear = 0;
     private long recordStart = Long.MAX_VALUE;
     private Sequencer sequencer;
 
@@ -133,6 +134,7 @@ public class VisualizerFrame extends JFrame {
                             new java.util.TimerTask() {
                                 @Override
                                 public void run() {
+                                    if (Math.abs(lastClear - System.nanoTime()) <= (long)5*1000000000) return;
                                     sequencer.start();
                                 }
                             },
@@ -162,6 +164,7 @@ public class VisualizerFrame extends JFrame {
         clear.addActionListener(e -> {
             main.getTimeline().clear();
             main.getPlaybackTL().clear();
+            lastClear = System.nanoTime();
             if (sequencer!=null && sequencer.isRunning()) {
                 sequencer.stop();
             }
