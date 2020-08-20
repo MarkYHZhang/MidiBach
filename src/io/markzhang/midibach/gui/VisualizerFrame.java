@@ -164,6 +164,7 @@ public class VisualizerFrame extends JFrame {
         clear.addActionListener(e -> {
             main.getTimeline().clear();
             main.getPlaybackTL().clear();
+            main.getPressedNotes().clear();
             lastClear = System.nanoTime();
             if (sequencer!=null && sequencer.isRunning()) {
                 sequencer.stop();

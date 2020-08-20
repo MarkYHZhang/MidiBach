@@ -52,6 +52,7 @@ public class Timeline {
 
     public void clear(){
         notesTimeline.clear();
+        intervalTree = new IntervalTree<>();
     }
 
     public Collection<Note> getContains(long ts) {
