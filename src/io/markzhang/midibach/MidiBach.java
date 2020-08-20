@@ -13,6 +13,7 @@ public class MidiBach {
 
     private Timeline timeline = new Timeline();
     private Timeline playbackTL = new Timeline();
+    private ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
 
     public void startReading() {
         MidiDevice device;
@@ -38,7 +39,6 @@ public class MidiBach {
     public class MidiInputReceiver implements Receiver {
         public String name;
         private Timeline tl;
-        private ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
         public MidiInputReceiver(String name, Timeline tl) {
             this.tl = tl;
             this.name = name;
@@ -72,6 +72,7 @@ public class MidiBach {
                 if (note == null) return;
                 note.setEndTime(timeStamp);
                 pressedNotes.remove(noteVal);
+                tll.getIntervalTree().insert(note);
             }
         }
     }
@@ -95,5 +96,9 @@ public class MidiBach {
 
     public void setFallingMicroSeconds(int fallingMicroSeconds) {
         this.fallingMicroSeconds = fallingMicroSeconds;
+    }
+
+    public ConcurrentHashMap<Integer, Note> getPressedNotes() {
+        return pressedNotes;
     }
 }

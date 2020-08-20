@@ -1,11 +1,12 @@
 package io.markzhang.midibach.models;
 
+import io.markzhang.midibach.utils.intervaltree.Interval;
 import javafx.util.Pair;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
-public class Note {
+public class Note implements Interval {
     private long startTime, endTime;
     private int noteVal;
     private int intensity;
@@ -74,5 +75,15 @@ public class Note {
                 ", noteVal=" + noteVal +
                 ", intensity=" + intensity +
                 '}';
+    }
+
+    @Override
+    public long start() {
+        return startTime;
+    }
+
+    @Override
+    public long end() {
+        return endTime;
     }
 }

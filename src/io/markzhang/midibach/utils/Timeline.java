@@ -1,14 +1,17 @@
 package io.markzhang.midibach.utils;
 
 import io.markzhang.midibach.models.Note;
+import io.markzhang.midibach.utils.intervaltree.IntervalTree;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Timeline {
 
     private ConcurrentSkipListMap<Long, Note> notesTimeline = new ConcurrentSkipListMap<>(); // startTime, Note
+    private IntervalTree<Note> intervalTree = new IntervalTree<>();
 
     public Timeline () {
 
@@ -24,10 +27,15 @@ public class Timeline {
 
     public void add(Note note) {
         long start = note.getStartTime();
+        long end = note.getEndTime();
         while (notesTimeline.containsKey(start)) {
             start += 1;
         }
         notesTimeline.put(start, note);
+    }
+
+    public IntervalTree<Note> getIntervalTree() {
+        return intervalTree;
     }
 
     public boolean contains(long startTime) {
@@ -47,13 +55,8 @@ public class Timeline {
     }
 
     public Collection<Note> getContains(long ts) {
-        Collection<Note> notes = new ArrayList<>();
-        for (Note note : notesTimeline.values()) {
-            if (note==null) continue;
-            if (note.getStartTime() <= ts && ts <= note.getEndTime()) {
-                notes.add(note);
-            }
-        }
+        List<Note> notes = new ArrayList<>();
+        intervalTree.overlappers(new Note(ts-1,ts+1,-1,-1)).forEachRemaining(notes::add);
         return notes;
     }
 
