@@ -8,7 +8,7 @@ As a pianist myself I've always wanted to visualize my playing especially after 
 This project is sort of an exploration project of an even bigger project that is work-in-progress -- (A MIDI sequencer)
 
 ## Plans
-- [ ] Active rendering, to prevent graphic jitters
+- [x] Active rendering, to prevent graphic jitters
 - [ ] Prettier buttons
 - [ ] Custom colours for the keys
 - [ ] Custom background support
