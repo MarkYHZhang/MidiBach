@@ -60,11 +60,8 @@ public class MidiBach {
             boolean down = status >= 144;
             int noteVal = rawData[1] & 0xFF;
             int intensity = rawData[2] & 0xFF;
-            if (down) {
+            if (down && !pressedNotes.containsKey(noteVal)) {
                 Note note = new Note(timeStamp, Long.MAX_VALUE, noteVal, intensity);
-                if (pressedNotes.containsKey(noteVal)){
-                    pressedNotes.get(noteVal).setEndTime(timeStamp);
-                }
                 pressedNotes.put(noteVal, note);
                 tll.add(note);
             } else {

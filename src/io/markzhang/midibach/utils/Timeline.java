@@ -31,6 +31,7 @@ public class Timeline {
         while (notesTimeline.containsKey(start)) {
             start += 1;
         }
+        note.setStartTime(start);
         notesTimeline.put(start, note);
     }
 
