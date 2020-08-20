@@ -84,8 +84,7 @@ public class VisualizerCanvas extends Canvas{
         //-----------------------------------------------------------------------------------------
         long bottomTime = System.nanoTime() / 1000;
         long topTime = bottomTime - instance.getFallingMicroSeconds();
-        final Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
         whiteKeyWidth = getWidth() / 52.0;
         blackKeyWidth = whiteKeyWidth * 0.612;
@@ -98,10 +97,10 @@ public class VisualizerCanvas extends Canvas{
             double xLoc = pair.getKey();
             boolean white = pair.getValue();
             if (white) {
-                g2d.setColor(Color.WHITE);
-                g2d.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
-                g2d.setColor(Color.BLACK);
-                g2d.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
+                g.setColor(Color.WHITE);
+                g.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
+                g.setColor(Color.BLACK);
+                g.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
             }
         }
         Collection<Note> pressed = instance.getPlaybackTL().getContains(bottomTime);
@@ -112,10 +111,10 @@ public class VisualizerCanvas extends Canvas{
             double xLoc = pair.getKey();
             boolean white = pair.getValue();
             if(white){
-                g2d.setColor(pressedWhiteKey);
-                g2d.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
-                g2d.setColor(Color.BLACK);
-                g2d.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
+                g.setColor(pressedWhiteKey);
+                g.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
+                g.setColor(Color.BLACK);
+                g.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,whiteKeyWidth, whiteKeyHeight));
             }
         }
 
@@ -124,10 +123,10 @@ public class VisualizerCanvas extends Canvas{
             double xLoc = pair.getKey();
             boolean white = pair.getValue();
             if (!white) {
-                g2d.setColor(Color.BLACK);
-                g2d.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
-                g2d.setColor(Color.BLACK);
-                g2d.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
+                g.setColor(Color.BLACK);
+                g.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
+                g.setColor(Color.BLACK);
+                g.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
             }
         }
 
@@ -136,11 +135,29 @@ public class VisualizerCanvas extends Canvas{
             double xLoc = pair.getKey();
             boolean white = pair.getValue();
             if(!white){
-                g2d.setColor(pressedBlackKey);
-                g2d.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
-                g2d.setColor(Color.BLACK);
-                g2d.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
+                g.setColor(pressedBlackKey);
+                g.fill(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
+                g.setColor(Color.BLACK);
+                g.draw(new Rectangle2D.Double(xLoc,getHeight()-whiteKeyHeight,blackKeyWidth, blackKeyHeight));
             }
+        }
+
+        Iterator<Note> i = instance.getPlaybackTL().getIntervalTree().overlappers(new Note(topTime, bottomTime+instance.getFallingMicroSeconds(),-1,-1));
+        while (i.hasNext()) {
+            Note v = i.next();
+            Pair<Double, Boolean> pair = getNoteX(v.getNoteVal());
+            double width = pair.getValue() ? whiteKeyWidth : blackKeyWidth;
+            double xLoc = pair.getKey() + width*0.18;
+            width = width*0.7;
+            Color c = pair.getValue() ? pressedWhiteKey : pressedBlackKey;
+            g.setColor(c);
+            double viewHeight = getHeight() - whiteKeyHeight;
+            double yTop = (double) (topTime - (v.getEndTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
+            double yBottom = (double) (topTime - (v.getStartTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
+            yBottom = Math.min(yBottom, viewHeight);
+            g.fillRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
+            g.setColor(Color.BLACK);
+            g.drawRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
         }
 
         List<Note> curNotes = new ArrayList<>();
@@ -152,33 +169,18 @@ public class VisualizerCanvas extends Canvas{
             double xLoc = pair.getKey() + width*0.18;
             width = width*0.7;
             Color c = pair.getValue() ? pressedWhiteKey : pressedBlackKey;
-            g2d.setColor(c);
+            g.setColor(c);
             double viewHeight = getHeight() - whiteKeyHeight;
             double yLoc = (double) (v.getStartTime() - topTime) / (bottomTime - topTime) * viewHeight;
             double yEnd = (double) (v.getEndTime() - topTime) / (bottomTime - topTime) * viewHeight;
             if (v.getEndTime() == Long.MAX_VALUE) yEnd = viewHeight;
-            g2d.fillRoundRect((int)xLoc, (int)yLoc, (int)width, (int)(yEnd-yLoc),10,15);
-            g2d.setColor(Color.BLACK);
-            g2d.drawRoundRect((int)xLoc, (int)yLoc, (int)width, (int)(yEnd-yLoc),10,15);
+            g.fillRoundRect((int)xLoc, (int)yLoc, (int)width, (int)(yEnd-yLoc),10,15);
+            g.setColor(Color.BLACK);
+            g.drawRoundRect((int)xLoc, (int)yLoc, (int)width, (int)(yEnd-yLoc),10,15);
         }
 
-        Iterator<Note> i = instance.getPlaybackTL().getIntervalTree().overlappers(new Note(topTime, bottomTime+instance.getFallingMicroSeconds(),-1,-1));
-        while (i.hasNext()) {
-            Note v = i.next();
-            Pair<Double, Boolean> pair = getNoteX(v.getNoteVal());
-            double width = pair.getValue() ? whiteKeyWidth : blackKeyWidth;
-            double xLoc = pair.getKey() + width*0.18;
-            width = width*0.7;
-            Color c = pair.getValue() ? pressedWhiteKey : pressedBlackKey;
-            g2d.setColor(c);
-            double viewHeight = getHeight() - whiteKeyHeight;
-            double yTop = (double) (topTime - (v.getEndTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
-            double yBottom = (double) (topTime - (v.getStartTime() - 2*instance.getFallingMicroSeconds())) / (bottomTime - topTime) * viewHeight;
-            yBottom = Math.min(yBottom, viewHeight);
-            g2d.fillRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
-            g2d.setColor(Color.BLACK);
-            g2d.drawRoundRect((int)xLoc, (int)yTop, (int)width, (int)(yBottom-yTop),10,15);
-        }
+        g.setColor(Color.WHITE);
+        g.drawString("FPS: " + fpsCount, 10,20);
 
         //-----------------------------------------------------------------------------------------
 
@@ -193,7 +195,7 @@ public class VisualizerCanvas extends Canvas{
     public void run() {
 
         //Maximum 60fps
-        double delta = 1.0/70.0;
+        double delta = 1.0/60.0;
         // convert the time to seconds
         double nextTime = (double)System.nanoTime() / 1000000000.0;
 
