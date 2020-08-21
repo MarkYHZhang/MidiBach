@@ -26,8 +26,8 @@ public class Timeline {
     }
 
     public void add(Note note) {
-        long start = note.getStartTime();
-        long end = note.getEndTime();
+        long start = (long)note.getStartTime();
+        long end = (long)note.getEndTime();
         while (notesTimeline.containsKey(start)) {
             start += 1;
         }

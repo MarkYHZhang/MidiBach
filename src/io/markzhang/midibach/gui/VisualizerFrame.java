@@ -26,7 +26,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VisualizerFrame extends JFrame {
@@ -51,7 +54,7 @@ public class VisualizerFrame extends JFrame {
                 }
                 if (sequence != null && !main.getTimeline().tail(recordStart).isEmpty()) {
                     Track track = sequence.createTrack();
-                    long offset = main.getTimeline().ceilNote(recordStart).getStartTime();
+                    double offset = main.getTimeline().ceilNote(recordStart).getStartTime();
 
                     MetaMessage mt = new MetaMessage();
                     try {
@@ -113,20 +116,49 @@ public class VisualizerFrame extends JFrame {
                 main.getPlaybackTL().clear();
                 try {
                     Sequence sequence = MidiSystem.getSequence(selectedFile);
-
-                    double microsecPerTick = sequence.getMicrosecondLength() * 1.0 / sequence.getTickLength();
-                    long startTime = System.nanoTime()/1000 + main.getFallingMicroSeconds();
+                    sequencer = MidiSystem.getSequencer();
+                    sequencer.setSequence(sequence);
+                    double microsecPerTick = 0;
+                    long lastTick = 0;
                     ConcurrentHashMap<Integer, Note> pressedNotes = new ConcurrentHashMap<>();
+                    ArrayList<MidiEvent> midiEvents = new ArrayList<>();
                     for (Track track : sequence.getTracks()) {
                         for (int i = 0; i < track.size(); i++) {
                             MidiEvent midiEvent = track.get(i);
-                            MidiMessage msg = midiEvent.getMessage();
-                            long timeStamp = startTime+(long)microsecPerTick*midiEvent.getTick();
-                            MidiBach.processMidiMsg(timeStamp, msg, main.getPlaybackTL(), pressedNotes);
+                            midiEvents.add(midiEvent);
                         }
                     }
-                    sequencer = MidiSystem.getSequencer();
-                    sequencer.setSequence(sequence);
+                    // sort based on ticks, because midi msgs might not be sorted based on increasing ticks order
+                    midiEvents.sort((o1, o2) -> {
+                        if (o1.getTick() < o2.getTick()) {
+                            return -1;
+                        } else if (o1.getTick() > o2.getTick()) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                    long startTime = System.nanoTime()/1000 + main.getFallingMicroSeconds();
+                    long timeStamp = startTime;
+                    for (MidiEvent midiEvent : midiEvents) {
+                        MidiMessage msg = midiEvent.getMessage();
+//                        System.out.print(midiEvent.getTick() + " ");
+//                        for (byte b : msg.getMessage()) {
+//                            System.out.print((b&0xFF) +" ");
+//                        }System.out.println();
+                        timeStamp += Math.round(microsecPerTick * (midiEvent.getTick() - lastTick));
+                        lastTick = midiEvent.getTick();
+//                        System.out.println(microsecPerTick * (midiEvent.getTick() - lastTick));
+                        MidiBach.processMidiMsg(timeStamp, msg, main.getPlaybackTL(), pressedNotes);
+                        if (msg.getStatus() == 255) { //Meta Message
+                            byte[] rawData = msg.getMessage();
+                            if ((rawData[1] & 0xFF) == 81) { // tempo change
+                                double microsecondsPerQuarterNote = ((rawData[3] & 0xFF) << 16)
+                                        | ((rawData[4] & 0xFF) << 8)
+                                        | (rawData[5] & 0xFF);
+                                microsecPerTick = getMicrosecondsPerTick(microsecondsPerQuarterNote);
+                            }
+                        }
+                    }
                     sequencer.open();
                     long timeDelta = System.nanoTime()/1000 - (startTime - main.getFallingMicroSeconds());
                     timeDelta /= 1000;
@@ -179,5 +211,30 @@ public class VisualizerFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setVisible(true);
         visualPanel.run();
+    }
+
+    private double getMicrosecondsPerTick(double microsecondsPerQuarterNote) {
+        double microsecondsPerTick;
+        float divisionType = sequencer.getSequence().getDivisionType();
+        if (divisionType == Sequence.PPQ) {
+            // (us/qn) / (ticks/qn) = us/ticks
+            microsecondsPerTick = (microsecondsPerQuarterNote * 1.0 / sequencer.getSequence().getResolution());
+        } else { // SMPTE
+            double framesPerSecond;
+            if (divisionType == Sequence.SMPTE_24) {
+                framesPerSecond = 24;
+            } else if (divisionType == Sequence.SMPTE_25) {
+                framesPerSecond = 25;
+            } else if (divisionType == Sequence.SMPTE_30) {
+                framesPerSecond = 30;
+            } else if (divisionType == Sequence.SMPTE_30DROP) {
+                framesPerSecond = 29.97;
+            } else {
+                framesPerSecond = -1;
+            }
+            double ticksPerSecond = sequencer.getSequence().getResolution() * framesPerSecond;
+            microsecondsPerTick = ((1.0 / ticksPerSecond) * 1000000);
+        }
+        return microsecondsPerTick;
     }
 }

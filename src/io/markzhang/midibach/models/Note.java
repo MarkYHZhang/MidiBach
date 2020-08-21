@@ -7,7 +7,7 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
 public class Note implements Interval {
-    private long startTime, endTime;
+    private double startTime, endTime;
     private int noteVal;
     private int intensity;
 
@@ -18,7 +18,7 @@ public class Note implements Interval {
         this.intensity = intensity;
     }
 
-    public long getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
@@ -26,7 +26,7 @@ public class Note implements Interval {
         this.startTime = startTime;
     }
 
-    public long getEndTime() {
+    public double getEndTime() {
         return endTime;
     }
 
@@ -50,16 +50,16 @@ public class Note implements Interval {
         this.intensity = intensity;
     }
 
-    public Pair<MidiEvent, MidiEvent> toMidiEvents(int channel, long timeOffset) {
+    public Pair<MidiEvent, MidiEvent> toMidiEvents(int channel, double timeOffset) {
         MidiEvent startEvent = null, endEvent = null;
         try {
             ShortMessage startMsg = new ShortMessage();
             startMsg.setMessage(144, channel, noteVal, intensity);
-            startEvent = new MidiEvent(startMsg, (int)(((startTime)+timeOffset)/1000));
+            startEvent = new MidiEvent(startMsg, (long)(((startTime)+timeOffset)/1000));
 
             ShortMessage endMsg = new ShortMessage();
             endMsg.setMessage(128, channel, noteVal, 64);
-            endEvent = new MidiEvent(endMsg, (int)(((endTime)+timeOffset)/1000));
+            endEvent = new MidiEvent(endMsg, (long)(((endTime)+timeOffset)/1000));
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -79,11 +79,11 @@ public class Note implements Interval {
 
     @Override
     public long start() {
-        return startTime;
+        return (long)startTime;
     }
 
     @Override
     public long end() {
-        return endTime;
+        return (long)endTime;
     }
 }

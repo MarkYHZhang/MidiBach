@@ -50,7 +50,7 @@ public class MidiBach {
         public void close() {}
     }
 
-    public static void processMidiMsg(long timeStamp, MidiMessage msg, Timeline tll, ConcurrentHashMap<Integer, Note> pressedNotes) {
+    public static boolean processMidiMsg(long timeStamp, MidiMessage msg, Timeline tll, ConcurrentHashMap<Integer, Note> pressedNotes) {
         byte[] rawData = msg.getMessage();
         int status = msg.getStatus();
         if (status == 176 && rawData[1] == 64) { // indicates pedal
@@ -66,12 +66,17 @@ public class MidiBach {
                 tll.add(note);
             } else {
                 Note note = pressedNotes.get(noteVal);
-                if (note == null) return;
+                if (note == null) return false;
                 note.setEndTime(timeStamp);
                 pressedNotes.remove(noteVal);
                 tll.getIntervalTree().insert(note);
             }
+        } else {
+
         }
+
+//        System.out.println();
+        return false;
     }
 
     public static void main(String[] args) {
